@@ -1,21 +1,22 @@
 class Selekt {
-    constructor(elParent, options = {}) {
+    #_isHandled = false;
+    #_elItem = null;
+    elSelectedPivot = null;
+    elSelectedLast = null;
+    isTouch = false;
+
+    constructor(/** @type {HTMLElement} */ elParent, options = {}) {
         this.elParent = elParent;
-        this.isAny = false;
-        this.isNone = false;
+        this.selectorIgnore = ".ignore";
+        this.classSelected = "is-selected";
         this.ctrlOn = false;
         this.isMultiple = true;
         this.selected = []; // list of selected items
-        this.elSelectedFirst = null;
-        this.elSelectedLast = null;
-        this.selectorItemsIgnore = ".ignore";
-        this.classSelected = "is-selected";
-        this.isTouch = false; // touch support
         this.onSelect = () => { };
-        this.onDeselect = () => { };
-        Object.assign(this, options);
-        this.select = this.select.bind(this);
-        this.handleWindowPointerUp = this.handleWindowPointerUp.bind(this);
+
+        this.handleSelect = this.handleSelect.bind(this);
+        this.handleClear = this.handleClear.bind(this);
+
         this.init(options);
     }
 
@@ -26,8 +27,10 @@ class Selekt {
      * @param {Element|null} elTarget
      * @returns {Element|null}
      */
-    closestElement(el, elTarget) {
-        while (el && el !== elTarget) el = el.parentElement;
+    closest(el, elTarget) {
+        while (el && el !== elTarget) {
+            el = el.parentElement;
+        }
         return el === elTarget ? el : null;
     }
 
@@ -39,12 +42,12 @@ class Selekt {
         while (el && el.parentElement !== this.elParent) {
             el = el.parentElement;
         }
-        if (!el.matches(this.selectorItemsIgnore)) {
+        if (el && !el.matches(this.selectorIgnore)) {
             return el;
         }
     }
 
-    getSelectControls(/** @type {PointerEvent} */ ev) {
+    getControls(/** @type {PointerEvent} */ ev) {
         const isCtrl = this.ctrlOn || ev.ctrlKey || ev.metaKey;
         const isShift = ev.shiftKey;
         return {
@@ -56,88 +59,104 @@ class Selekt {
     }
 
     getChildren() {
-        return Array.from(this.elParent.children).filter(el => !el.matches(this.selectorItemsIgnore));
+        return [...this.elParent.children].filter(el => !el.matches(this.selectorIgnore));
     }
 
-    toggleCtrl(state) {
+    toggleCtrl(/** @type {boolean} */ state) {
         this.ctrlOn = state ?? !this.ctrlOn;
     }
 
-    select(/** @type {PointerEvent} */ ev) {
-        console.log(ev.type);
-        const evTarget = /** @type {HTMLElement} */ (ev.target);
-        const elItem = this.getImmediateChild(evTarget);
-        
+    handleSelect(/** @type {PointerEvent} */ ev) {
+        const elItem = this.getImmediateChild(/** @type {HTMLElement} */(ev.target));
         if (!elItem) return;
 
-        const selCtrl = this.getSelectControls(ev);
+        const isDown = ev.type === "pointerdown";
 
-        if (selCtrl.isAny) {
-            ev.preventDefault();
+        // The pointerup event must match the item that initiated it
+        if (!isDown && this.#_elItem !== elItem) {
+            return;
+        } else {
+            this.#_elItem = elItem; // Store for later use
         }
 
+        const controls = this.getControls(ev);
+        if (controls.isAny) ev.preventDefault();
+
+        const isFirstSelect = controls.isNone; // First selection flag
         const isSelected = elItem.matches(`.${this.classSelected}`);
 
-        // Prevent toggle on single (unless Ctrl key is pressed)
-        if (this.selected.length === 1 && isSelected && !selCtrl.isCtrl) {
-            console.log("Prevented toggle on single");
+        if (!isDown && this.#_isHandled) {
+            // PASS: Already handled by pointerDown, ignore pointerup
+            this.#_isHandled = false;
             return;
         }
 
-        // Prevent deselect on contextmenu
-        if (ev.button === 2 && this.selected.length > 1 && isSelected) {
-            return;
+        if (isDown) {
+            // Handle already selected items on pointerup
+            if (isSelected && this.selected.length > 0 && controls.isNone) {
+                return;
+            }
+            // Prevent toggle on single (unless Ctrl key is pressed)
+            else if (isSelected && this.selected.length === 1 && !controls.isCtrl) {
+                return;
+            }
+            // Do nothing on pointerdown if multiple select (we might want to drag items)
+            else if (isSelected && !isFirstSelect && !controls.isCtrl) {
+                return;
+            }
         }
 
-        // First selection flag
-        const isFirstSelect = !isSelected && (selCtrl.isNone && this.selected.length === 0);
-
-
-        // Only the first selection should be on pointerdown
-        // Multiple selections are rescheduled for pointerup,
-        // that way we can drag multiple items at the same time without losing selection.
-        if (ev.type === "pointerdown" && !isFirstSelect) {
-            console.log("PASSING TO PUP");
-            return; // We'll handle multi-selekt on pointerup
-        }
+        // LOGIC STARTS HERE
 
         if (isFirstSelect) {
-            console.log("isFirstSelect");
-            this.elSelectedFirst = elItem;
             this.deselect();
         }
 
+        // Determine selection pivot element
+        if (isFirstSelect || controls.isCtrl) {
+            this.elSelectedPivot = elItem;
+        }
+
         this.selected.forEach(el => el.classList.remove(this.classSelected));
-        const siblings = this.getChildren(elItem.parentElement);
 
         if (this.isMultiple) {
-            let ti = siblings.indexOf(elItem); // target index
-            let li = siblings.indexOf(this.elSelectedLast); // last known index
-            let ai = this.selected.indexOf(elItem); // indexes array
-            if (selCtrl.isCtrl) {
+            const siblings = this.getChildren();
+            const ai = this.selected.indexOf(elItem); // Selected index in array
+            let ti = siblings.indexOf(elItem); // Target index
+            let pi = siblings.indexOf(this.elSelectedPivot); // Pivot index
+            if (controls.isCtrl) {
                 if (ai > -1) this.selected.splice(ai, 1); // Deselect
                 else this.selected.push(elItem); // Select
             }
-            if (selCtrl.isShift && this.selected.length > 0) {
-                var selectDirectionUp = ti < li;
-                if (ti > li) ti = [li, li = ti][0];
-                this.selected = siblings.slice(ti, li + 1);
+            if (controls.isShift && this.selected.length > 0) {
+                const selectDirectionUp = ti < pi;
+                if (ti > pi) ti = [pi, pi = ti][0];
+                this.selected = siblings.slice(ti, pi + 1);
                 if (selectDirectionUp) {
                     this.selected = this.selected.reverse(); // Reverse in order to preserve user selection direction
                 }
             }
-            if (selCtrl.isNone) {
+            if (controls.isNone) {
                 this.selected = ai < 0 || this.selected.length > 1 ? [elItem] : [];
             }
-            this.elSelectedLast = elItem;
         } else {
-            this.elSelectedLast = elItem;
             this.selected = [elItem];
+            this.elSelectedPivot = elItem;
         }
 
+        this.elSelectedLast = elItem;
+
         // Filter out not allowed (ignore) items
-        this.selected = this.selected.filter((el) => !el.matches(this.selectorItemsIgnore));
+        this.selected = this.selected.filter((el) => !el.matches(this.selectorIgnore));
         this.selected.forEach(el => el.classList.add(this.classSelected));
+
+        // Schedule window pointerup to clear selection
+        if (isDown) {
+            removeEventListener("pointerup", this.handleClear);
+            addEventListener("pointerup", this.handleClear);
+        }
+
+        this.#_isHandled = true; // Mark as handled to prevent further processing
 
         // CALLBACK:
         this.onSelect?.call(this, {
@@ -147,40 +166,38 @@ class Selekt {
     }
 
     deselect() {
-        const oldItems = [...this.selected];
         this.selected.forEach(el => el.classList.remove(this.classSelected));
         this.selected = [];
-        // CALLBACK:
-        this.onDeselect?.call(this, {
-            items: oldItems,
-            elSelectedLast: this.elSelectedLast
-        });
+        this.selectedLast = null;
+        this.elSelectedPivot = null;
     }
 
-    handleWindowPointerUp(/** @type {PointerEvent} */ ev) {
-        const hasTargetParent = this.closestElement(ev.target, this.elParent);
+    handleClear(/** @type {PointerEvent} */ ev) {
+        if (!this.selected.length) return;
+        const elTarget = /** @type {HTMLElement} */ (ev.target);
+        const hasTargetParent = this.closest(elTarget, this.elParent);
         if (!hasTargetParent) {
             this.deselect();
         }
     }
 
     handleTouchStart(/** @type {TouchEvent} */ ev) {
-        console.log("touch");
-        this.isTouch = true;
+        console.log("@TODO touch", ev.type);
+        this.ctrlOn = true;
     }
 
     init(options = {}) {
         Object.assign(this, options);
-        this.elParent.addEventListener("pointerdown", this.select);
-        this.elParent.addEventListener("pointerup", this.select);
+        this.elParent.addEventListener("pointerdown", this.handleSelect);
+        this.elParent.addEventListener("pointerup", this.handleSelect);
         this.elParent.addEventListener("touchstart", this.handleTouchStart);
-        addEventListener("pointerup", this.handleWindowPointerUp);
     }
 
     destroy() {
-        this.elParent.removeEventListener("pointerdown", this.select);
-        this.elParent.removeEventListener("pointerup", this.select);
-        removeEventListener("pointerup", this.handleWindowPointerUp);
+        this.elParent.removeEventListener("pointerdown", this.handleSelect);
+        this.elParent.removeEventListener("pointerup", this.handleSelect);
+        this.elParent.removeEventListener("touchstart", this.handleTouchStart);
+        removeEventListener("pointerup", this.handleClear);
     }
 }
 

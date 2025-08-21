@@ -11,8 +11,5 @@ const selekt = new Selekt(listOne, {
     multiple: true,
     onSelect: (data) => {
         console.log("Selected items:", data.selected);
-    },
-    onDeselect: (data) => {
-        console.log("Deselected items:", data.selected);
     }
 });
