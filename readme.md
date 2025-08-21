@@ -9,6 +9,6 @@ UI multi-select library
 
 ___
 
-## Licence
+## License
 
 MIT
