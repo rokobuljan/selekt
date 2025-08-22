@@ -1,6 +1,7 @@
 class Selekt {
     #_isHandled = false;
     #_elItem = null;
+    #_isEnabled = true;
     elSelectedPivot = null;
     elSelectedLast = null;
     isTouch = false;
@@ -18,6 +19,17 @@ class Selekt {
         this.handleClear = this.handleClear.bind(this);
 
         this.init(options);
+    }
+
+    disable() {
+        this.#_isEnabled = false;
+    }
+
+    enable() {
+        // RAF is helpful here for a drag-and-drop action to terminate, before re-enabling selection
+        requestAnimationFrame(() => {
+            this.#_isEnabled = true;
+        });
     }
 
     /**
@@ -67,6 +79,10 @@ class Selekt {
     }
 
     handleSelect(/** @type {PointerEvent} */ ev) {
+        if (!this.#_isEnabled) {
+            return;
+        }
+
         const elItem = this.getImmediateChild(/** @type {HTMLElement} */(ev.target));
         const isDown = ev.type === "pointerdown";
 
@@ -85,7 +101,7 @@ class Selekt {
         const controls = this.getControls(ev);
         if (controls.isAny) ev.preventDefault();
 
-        const isFirstSelect = controls.isNone; // First selection flag
+        const isFirstSelect = isDown && controls.isNone; // First selection flag
         const isSelected = elItem.matches(`.${this.classSelected}`);
 
         if (!isDown && this.#_isHandled) {
