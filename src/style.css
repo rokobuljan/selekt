@@ -45,6 +45,11 @@ h1 {
     }
 }
 
+ul {
+    outline: 1px solid #666;
+    padding-bottom: 2rem;
+}
+
 .is-selected {
     background: #0bf8;
     user-select: none;

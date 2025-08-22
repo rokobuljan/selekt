@@ -68,7 +68,11 @@ class Selekt {
 
     handleSelect(/** @type {PointerEvent} */ ev) {
         const elItem = this.getImmediateChild(/** @type {HTMLElement} */(ev.target));
-        if (!elItem) return;
+
+        if (!elItem) {
+            this.deselect();
+            return;
+        }
 
         const isDown = ev.type === "pointerdown";
 
