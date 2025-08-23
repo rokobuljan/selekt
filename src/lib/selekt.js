@@ -26,11 +26,15 @@ class Selekt {
         this.#isEnabled = false;
     }
 
-    enable() {
-        // RAF is helpful here for a drag-and-drop action to terminate, before re-enabling selection
-        requestAnimationFrame(() => {
+    enable(isImmediate = true) {
+        if (isImmediate) {
             this.#isEnabled = true;
-        });
+        } else {
+            // RAF is helpful here for a drag-and-drop action to terminate, before re-enabling selection
+            requestAnimationFrame(() => {
+                this.#isEnabled = true;
+            });
+        }
     }
 
     /**
@@ -200,17 +204,25 @@ class Selekt {
     }
 
     add(elItem, index) {
+        if (Array.isArray(elItem)) {
+            elItem.forEach((el, i) => index ? this.add(el, index + i) : this.add(el));
+            return;
+        }
         index ??= this.selected.length;
         this.selected.splice(index, 0, elItem);
         elItem.classList.add(this.classSelected);
     }
 
     remove(elItem) {
+        if (Array.isArray(elItem)) {
+            elItem.forEach(el => this.remove(el));
+            return;
+        }
         const index = this.selected.indexOf(elItem);
         if (index > -1) {
             this.selected.splice(index, 1);
             elItem.classList.remove(this.classSelected);
-        } 
+        }
     }
 
     handleClear(/** @type {PointerEvent} */ ev) {
@@ -225,7 +237,6 @@ class Selekt {
     deselect() {
         this.selected.forEach(el => el.classList.remove(this.classSelected));
         this.selected = [];
-        this.selectedLast = null;
         this.#elSelectedPivot = null;
     }
 
