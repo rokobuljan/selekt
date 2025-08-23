@@ -47,33 +47,6 @@ class Selekt {
         return el === elTarget ? el : null;
     }
 
-    // /**
-    //  * Get the closest valid child element of the parent element starting from the Event Target
-    //  */
-    // getImmediateChild(elTarget) {
-    //     if (!this.elParent.contains(elTarget)) {
-    //         return null;
-    //     }
-
-    //     let el = elTarget;
-    //     // Traverse up until we reach our direct child
-    //     while (el && el.parentElement !== this.elParent) {
-    //         el = el.parentElement;
-    //     }
-
-    //     if (el && el.parentElement === this.elParent && !el.matches(this.selectorIgnore)) {
-    //         // Check if target belongs to a nested selekt container
-    //         let checkEl = elTarget;
-    //         while (checkEl && checkEl !== el) {
-    //             if (checkEl.hasAttribute('data-selekt') && checkEl !== this.elParent) {
-    //                 return null; // Target belongs to nested selekt container
-    //             }
-    //             checkEl = checkEl.parentElement;
-    //         }
-    //         return el;
-    //     }
-    // }
-
     /**
      * Get the closest valid child element of the parent element starting from the Event Target
      */
@@ -187,12 +160,12 @@ class Selekt {
             let ti = siblings.indexOf(elItem); // Target index
             let pi = siblings.indexOf(this.#elSelectedPivot); // Pivot index
             if (controls.isCtrl) {
-                if (ai > -1) this.selected.splice(ai, 1); // Deselect
-                else this.selected.push(elItem); // Select
+                if (ai === -1) this.add(elItem); // Select
+                else this.remove(elItem); // Deselect 
             }
             if (controls.isShift && this.selected.length > 0) {
                 const selectDirectionUp = ti < pi;
-                if (ti > pi) ti = [pi, pi = ti][0];
+                if (ti > pi) [ti, pi] = [pi, ti];
                 this.selected = siblings.slice(ti, pi + 1);
                 if (selectDirectionUp) {
                     this.selected = this.selected.reverse(); // Reverse in order to preserve user selection direction
@@ -203,7 +176,6 @@ class Selekt {
             }
         } else {
             this.selected = [elItem];
-            this.#elSelectedPivot = elItem;
         }
 
         this.elSelectedLast = elItem;
@@ -225,6 +197,20 @@ class Selekt {
             selected: this.selected,
             elSelectedLast: this.elSelectedLast
         });
+    }
+
+    add(elItem, index) {
+        index ??= this.selected.length;
+        this.selected.splice(index, 0, elItem);
+        elItem.classList.add(this.classSelected);
+    }
+
+    remove(elItem) {
+        const index = this.selected.indexOf(elItem);
+        if (index > -1) {
+            this.selected.splice(index, 1);
+            elItem.classList.remove(this.classSelected);
+        } 
     }
 
     handleClear(/** @type {PointerEvent} */ ev) {
