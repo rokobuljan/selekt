@@ -214,8 +214,8 @@ class Selekt {
 
         // Schedule window pointerup to clear selection
         if (isDown) {
-            removeEventListener("pointerup", this.handleClear);
-            addEventListener("pointerup", this.handleClear);
+            removeEventListener("pointerdown", this.handleClear);
+            addEventListener("pointerdown", this.handleClear);
         }
 
         this.#isHandled = true; // Mark as handled to prevent further processing
@@ -259,7 +259,6 @@ class Selekt {
         this.elParent.removeEventListener("pointerdown", this.handleSelect);
         this.elParent.removeEventListener("pointerup", this.handleSelect);
         this.elParent.removeEventListener("touchstart", this.handleTouchStart);
-        removeEventListener("pointerup", this.handleClear);
     }
 }
 
