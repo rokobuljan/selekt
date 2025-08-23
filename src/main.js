@@ -1,15 +1,15 @@
 import "./style.css"
-import Selekt from "./selekt.js";
+import Selekt from "./lib/selekt.js";
 
 const listOne = document.querySelector("#list-one");
 const listTwo = document.querySelector("#list-two");
-
-// Initialize Selekt
-const selekt = new Selekt(listOne, {
-    selectorItemsIgnore: ".ignore",
-    classSelected: "is-selected",
-    multiple: true,
+const listTre = document.querySelector("#list-tre");
+const opts = {
     onSelect: (data) => {
         console.log("Selected items:", data.selected);
     }
-});
+};
+// Initialize Selekt
+new Selekt(listOne, opts);
+new Selekt(listTwo, opts);
+new Selekt(listTre, opts);

@@ -1,0 +1,17 @@
+{
+    "include": ["src/lib/*"],
+    "compilerOptions": {
+        "noEmitOnError": true,
+        "rootDir": "src/lib",
+        "target": "ESNext",
+        "module": "ESNext",
+        "lib": ["ESNext", "DOM", "DOM.Iterable"],
+        "allowJs": true,
+        "checkJs": true,
+        "declaration": true,
+        "emitDeclarationOnly": true,
+        "outDir": "dist",
+        "resolveJsonModule": true,
+        "moduleResolution": "node"
+    }
+}

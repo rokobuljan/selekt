@@ -1,8 +1,9 @@
 class Selekt {
+    static elSelectedLastParent = null;
     #isHandled = false;
     #elItem = null;
     #isEnabled = true;
-    elSelectedPivot = null;
+    #elSelectedPivot = null;
     elSelectedLast = null;
     isTouch = false;
 
@@ -46,10 +47,41 @@ class Selekt {
         return el === elTarget ? el : null;
     }
 
+    // /**
+    //  * Get the closest valid child element of the parent element starting from the Event Target
+    //  */
+    // getImmediateChild(elTarget) {
+    //     if (!this.elParent.contains(elTarget)) {
+    //         return null;
+    //     }
+
+    //     let el = elTarget;
+    //     // Traverse up until we reach our direct child
+    //     while (el && el.parentElement !== this.elParent) {
+    //         el = el.parentElement;
+    //     }
+
+    //     if (el && el.parentElement === this.elParent && !el.matches(this.selectorIgnore)) {
+    //         // Check if target belongs to a nested selekt container
+    //         let checkEl = elTarget;
+    //         while (checkEl && checkEl !== el) {
+    //             if (checkEl.hasAttribute('data-selekt') && checkEl !== this.elParent) {
+    //                 return null; // Target belongs to nested selekt container
+    //             }
+    //             checkEl = checkEl.parentElement;
+    //         }
+    //         return el;
+    //     }
+    // }
+
     /**
      * Get the closest valid child element of the parent element starting from the Event Target
      */
     getImmediateChild(elTarget) {
+        // Quick validation
+        if (!this.elParent.contains(elTarget)) {
+            return null;
+        }
         let el = elTarget;
         while (el && el.parentElement !== this.elParent) {
             el = el.parentElement;
@@ -82,13 +114,24 @@ class Selekt {
         if (!this.#isEnabled) {
             return;
         }
-
-        const elItem = this.getImmediateChild(/** @type {HTMLElement} */(ev.target));
+        const elItem = this.getImmediateChild(/**@type {HTMLElement}*/(ev.target));
         const isDown = ev.type === "pointerdown";
+        if (!elItem) return;
 
         if (isDown && !elItem) {
             this.deselect();
             return;
+        }
+
+        // Deselect other parents
+        if (Selekt.elSelectedLastParent && this.elParent !== Selekt.elSelectedLastParent) {
+            this.deselect();
+            return;
+        } else {
+            Selekt.elSelectedLastParent = this.elParent;
+            requestAnimationFrame(() => {
+                Selekt.elSelectedLastParent = null;
+            });
         }
 
         // The pointerup event must match the item that initiated it
@@ -133,7 +176,7 @@ class Selekt {
 
         // Determine selection pivot element
         if (isFirstSelect || controls.isCtrl) {
-            this.elSelectedPivot = elItem;
+            this.#elSelectedPivot = elItem;
         }
 
         this.selected.forEach(el => el.classList.remove(this.classSelected));
@@ -142,7 +185,7 @@ class Selekt {
             const siblings = this.getChildren();
             const ai = this.selected.indexOf(elItem); // Selected index in array
             let ti = siblings.indexOf(elItem); // Target index
-            let pi = siblings.indexOf(this.elSelectedPivot); // Pivot index
+            let pi = siblings.indexOf(this.#elSelectedPivot); // Pivot index
             if (controls.isCtrl) {
                 if (ai > -1) this.selected.splice(ai, 1); // Deselect
                 else this.selected.push(elItem); // Select
@@ -160,7 +203,7 @@ class Selekt {
             }
         } else {
             this.selected = [elItem];
-            this.elSelectedPivot = elItem;
+            this.#elSelectedPivot = elItem;
         }
 
         this.elSelectedLast = elItem;
@@ -184,13 +227,6 @@ class Selekt {
         });
     }
 
-    deselect() {
-        this.selected.forEach(el => el.classList.remove(this.classSelected));
-        this.selected = [];
-        this.selectedLast = null;
-        this.elSelectedPivot = null;
-    }
-
     handleClear(/** @type {PointerEvent} */ ev) {
         if (!this.selected.length) return;
         const elTarget = /** @type {HTMLElement} */ (ev.target);
@@ -198,6 +234,13 @@ class Selekt {
         if (!hasTargetParent) {
             this.deselect();
         }
+    }
+
+    deselect() {
+        this.selected.forEach(el => el.classList.remove(this.classSelected));
+        this.selected = [];
+        this.selectedLast = null;
+        this.#elSelectedPivot = null;
     }
 
     handleTouchStart(/** @type {TouchEvent} */ ev) {
