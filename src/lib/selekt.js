@@ -18,6 +18,7 @@ class Selekt {
 
         this.handleDown = this.handleDown.bind(this);
         this.handleUp = this.handleUp.bind(this);
+        this.handleTouchstart = this.handleTouchstart.bind(this);
 
         this.init(options);
 
@@ -218,7 +219,6 @@ class Selekt {
     }
 
     handleTouchstart(/** @type {TouchEvent} */ ev) {
-        console.log("@TODO touch", ev.type);
         this.ctrlOn = true;
     }
 
