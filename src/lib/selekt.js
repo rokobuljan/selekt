@@ -1,11 +1,23 @@
 class Selekt {
-    static previousInstance = null;
     static selected = [];
+    static previousInstance = null;
+    static isClearInit = false;
     static isBusy = false;
+    static handleClear(/** @type {PointerEvent} */ ev) {
+        if (!Selekt.previousInstance || !Selekt.selected.length) return;
+        const targetParent = Selekt.previousInstance.closest(
+            /** @type {HTMLElement} */(ev.target),
+            Selekt.previousInstance.elParent
+        );        
+        if (!targetParent) {
+            Selekt.previousInstance.clear();
+            Selekt.previousInstance = null;
+        }
+    }
+
     #elPivot = null;
     elItem = null;
     isTouch = false;
-    static globalClear = false;
 
     constructor(/** @type {HTMLElement} */ elParent, options = {}) {
         this.elParent = elParent;
@@ -22,22 +34,21 @@ class Selekt {
 
         this.init(options);
 
-        if (!Selekt.globalClear) {
-            Selekt.globalClear = true;
-            addEventListener("pointerup", Selekt.handleClear);
+        if (!Selekt.isClearInit) {
+            Selekt.isClearInit = true;
+            addEventListener("pointerdown", Selekt.handleClear);
         }
     }
 
-    static handleClear(/** @type {PointerEvent} */ ev) {
-        if (!Selekt.previousInstance || !Selekt.selected.length) return;
-        const targetParent = Selekt.previousInstance.closest(
-            /** @type {HTMLElement} */(ev.target),
-            Selekt.previousInstance.elParent
-        );
-        if (!targetParent) {
-            console.log("SELEKT: Clearing selection");
-            Selekt.previousInstance.clear();
-        }
+    init(options = {}) {
+        Object.assign(this, options);
+        this.elParent.addEventListener("pointerdown", this.handleDown);
+        // this.elParent.addEventListener("touchstart", this.handleTouchstart);
+    }
+
+    destroy() {
+        this.elParent.removeEventListener("pointerdown", this.handleDown);
+        // this.elParent.removeEventListener("touchstart", this.handleTouchstart);
     }
 
     disable() {
@@ -136,7 +147,6 @@ class Selekt {
             this.clear().add(this.elItem);
         }
 
-        // CALLBACK:
         this.onSelect?.call(this, { selected: Selekt.selected });
     }
 
@@ -183,6 +193,10 @@ class Selekt {
         this.selectLogic(ev);
     }
 
+    handleTouchstart(/** @type {TouchEvent} */ ev) {
+        this.ctrlOn = true;
+    }
+
     add(elItem, index) {
         if (Array.isArray(elItem)) {
             elItem.forEach((el, i) => index ? this.add(el, index + i) : this.add(el));
@@ -216,21 +230,6 @@ class Selekt {
         Selekt.selected.forEach(el => el.classList.remove(this.classSelected));
         Selekt.selected = [];
         return this;
-    }
-
-    handleTouchstart(/** @type {TouchEvent} */ ev) {
-        this.ctrlOn = true;
-    }
-
-    init(options = {}) {
-        Object.assign(this, options);
-        this.elParent.addEventListener("pointerdown", this.handleDown);
-        this.elParent.addEventListener("touchstart", this.handleTouchstart);
-    }
-
-    destroy() {
-        this.elParent.removeEventListener("pointerdown", this.handleDown);
-        this.elParent.removeEventListener("touchstart", this.handleTouchstart);
     }
 }
 
