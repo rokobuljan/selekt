@@ -40,6 +40,7 @@ class Selekt {
 
     disable() {
         this.isEnabled = false;
+        return this;
     }
 
     enable(isImmediate = true) {
@@ -51,6 +52,7 @@ class Selekt {
                 this.isEnabled = true;
             });
         }
+        return this;
     }
 
     /**
