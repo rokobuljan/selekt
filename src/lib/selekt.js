@@ -162,24 +162,16 @@ class Selekt {
 
         // Determine if to handle on pointerdown or reschedule for pointerup
         const isSelected = this.elItem.matches(`.${this.classSelected}`); // Was already selected?
-
-        // Handle already selected items on pointerup
-        if (isSelected && Selekt.selected.length > 0 && controls.isNone) {
+        
+        if (
+            (isSelected && Selekt.selected.length > 0 && controls.isNone) || // Handle already selected items on pointerup
+            (isSelected && Selekt.selected.length === 1 && !controls.isCtrl) || // Prevent toggle on single (unless Ctrl key is pressed)
+            (isSelected && !controls.isCtrl) // Do nothing on pointerdown if multiple select (we might want to drag items)
+        ) {
             this.elItem.addEventListener("pointerup", this.handleUp, { once: true });
-            return;
+        } else {
+            this.selectLogic(ev);
         }
-        // Prevent toggle on single (unless Ctrl key is pressed)
-        else if (isSelected && Selekt.selected.length === 1 && !controls.isCtrl) {
-            this.elItem.addEventListener("pointerup", this.handleUp, { once: true });
-            return;
-        }
-        // Do nothing on pointerdown if multiple select (we might want to drag items)
-        else if (isSelected && !controls.isCtrl) {
-            this.elItem.addEventListener("pointerup", this.handleUp, { once: true });
-            return;
-        }
-
-        this.selectLogic(ev);
     }
 
     handleUp(/** @type {PointerEvent} */ ev) {
