@@ -34,6 +34,7 @@ class Selekt {
             Selekt.previousInstance.elParent
         );
         if (!targetParent) {
+            console.log("SELEKT: Clearing selection");
             Selekt.previousInstance.clear();
         }
     }
@@ -177,6 +178,7 @@ class Selekt {
     }
 
     handleUp(/** @type {PointerEvent} */ ev) {
+        if (!this.isEnabled) return;
         this.selectLogic(ev);
     }
 
@@ -204,7 +206,7 @@ class Selekt {
         return this;
     }
 
-    /** @returns {Element[]} Get current selected elements */
+    /** @returns {HTMLElement[]} Get current selected elements */
     get() {
         return Selekt.selected;
     }
