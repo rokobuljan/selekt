@@ -2,7 +2,7 @@ class Selekt {
     static previousInstance = null;
     static selected = [];
     static isBusy = false;
-    #elSelectedPivot = null;
+    #elPivot = null;
     elItem = null;
     isTouch = false;
     static globalClear = false;
@@ -29,9 +29,11 @@ class Selekt {
 
     static handleClear(/** @type {PointerEvent} */ ev) {
         if (!Selekt.previousInstance || !Selekt.selected.length) return;
-        const elTarget = /** @type {HTMLElement} */ (ev.target);
-        const hasTargetParent = Selekt.previousInstance.closest(elTarget, Selekt.previousInstance.elParent);
-        if (!hasTargetParent) {
+        const targetParent = Selekt.previousInstance.closest(
+            /** @type {HTMLElement} */(ev.target),
+            Selekt.previousInstance.elParent
+        );
+        if (!targetParent) {
             Selekt.previousInstance.clear();
         }
     }
@@ -102,24 +104,27 @@ class Selekt {
     }
 
     selectLogic(/** @type {PointerEvent} */ ev) {
-        const controls = this.getControls(ev);
         if (this.isMultiple) {
-            const siblings = this.getAllowedChildren();
-            const ai = Selekt.selected.indexOf(this.elItem); // Selected index in array
-            let ti = siblings.indexOf(this.elItem); // Target index
-            let pi = siblings.indexOf(this.#elSelectedPivot); // Pivot index
-            // Single
+            const controls = this.getControls(ev);
+            // SINGLE
             if (controls.isNone) {
+                const ai = Selekt.selected.indexOf(this.elItem); // Selected index in array
+                this.#elPivot = this.elItem; // Set pivot element (for shift selection)
                 if (ai === -1 || Selekt.selected.length > 1) this.clear().add(this.elItem); // Select
                 else this.clear(); // Deselect 
             }
             // CTRL
-            if (controls.isCtrl) {
+            else if (controls.isCtrl) {
+                const ai = Selekt.selected.indexOf(this.elItem); // Selected index in array
+                this.#elPivot = this.elItem;  // Set pivot element (for shift selection)
                 if (ai === -1) this.add(this.elItem); // Select
                 else this.remove(this.elItem); // Deselect 
             }
-            // Shift select
+            // SHIFT
             else if (controls.isShift && Selekt.selected.length > 0) {
+                const siblings = this.getAllowedChildren();
+                let ti = siblings.indexOf(this.elItem); // Target index
+                let pi = siblings.indexOf(this.#elPivot); // Pivot index
                 if (ti > pi) [ti, pi] = [pi, ti];
                 this.clear().add(siblings.slice(ti, pi + 1));
             }
@@ -127,12 +132,8 @@ class Selekt {
             this.clear().add(this.elItem);
         }
 
-        Selekt.selected.forEach(el => el.classList.add(this.classSelected));
-
         // CALLBACK:
-        this.onSelect?.call(this, {
-            selected: Selekt.selected,
-        });
+        this.onSelect?.call(this, { selected: Selekt.selected });
     }
 
     handleDown(/** @type {PointerEvent} */ ev) {
@@ -159,12 +160,8 @@ class Selekt {
             Selekt.previousInstance = this;
         }
 
+        // Determine if to handle on pointerdown or reschedule for pointerup
         const isSelected = this.elItem.matches(`.${this.classSelected}`); // Was already selected?
-
-        // Determine pivot element
-        if (controls.isNone || controls.isCtrl) {
-            this.#elSelectedPivot = this.elItem;
-        }
 
         // Handle already selected items on pointerup
         if (isSelected && Selekt.selected.length > 0 && controls.isNone) {
