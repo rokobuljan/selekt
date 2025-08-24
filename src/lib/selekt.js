@@ -230,7 +230,10 @@ class Selekt {
     }
 
     clear() {
-        Selekt.selected.forEach(el => el.classList.remove(this.classSelected));
+        Selekt.selected.forEach((el) => {
+            el.classList.remove(this.classSelected);
+            el.removeAttribute("data-selekt-index");
+        });
         Selekt.selected = [];
         return this;
     }
