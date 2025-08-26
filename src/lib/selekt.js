@@ -1,10 +1,11 @@
 class Selekt {
-    static selected = [];
+    static selected = new Set();
+    static selectedOld = [];
     static previousInstance = null;
     static isClearInit = false;
     static isBusy = false;
     static handleClear(/** @type {PointerEvent} */ ev) {
-        if (!Selekt.previousInstance || !Selekt.selected.length) return;
+        if (!Selekt.previousInstance || !Selekt.selected.size) return;
         const targetParent = Selekt.previousInstance.closest(
             /** @type {HTMLElement} */(ev.target),
             Selekt.previousInstance.elParent
@@ -56,15 +57,8 @@ class Selekt {
         return this;
     }
 
-    enable(onNextTick = false) {
-        if (!onNextTick) {
-            this.isEnabled = true;
-        } else {
-            // RAF is helpful here for a drag-and-drop action to terminate, before re-enabling selection
-            requestAnimationFrame(() => {
-                this.isEnabled = true;
-            });
-        }
+    enable() {
+        this.isEnabled = true;
         return this;
     }
 
@@ -122,28 +116,26 @@ class Selekt {
         if (this.isMultiple) {
             const controls = this.getControls(ev);
             const siblings = this.getAllowedChildren();
-            let oi = siblings.indexOf(this.elItem); // Target's original index
             // SINGLE
             if (controls.isNone) {
-                const ai = Selekt.selected.indexOf(this.elItem); // Selected index in array
+                const isSel = this.isSelected(this.elItem); // Already selected?
                 this.#elPivot = this.elItem; // Set pivot element (for shift selection)
-                if (ai === -1 || Selekt.selected.length > 1) this.clear().add(this.elItem, oi); // Select
+                if (!isSel || Selekt.selected.size > 1) this.clear().add(this.elItem); // Select
                 else this.clear(); // Deselect 
             }
             // CTRL
             else if (controls.isCtrl) {
-                const ai = Selekt.selected.indexOf(this.elItem); // Selected index in array
+                const isSel = this.isSelected(this.elItem); // Already selected?
                 this.#elPivot = this.elItem;  // Set pivot element (for shift selection)
-                if (ai === -1) {
-                    this.add(this.elItem, oi); // Select
-                }
+                if (!isSel) this.add(this.elItem); // Select
                 else this.remove(this.elItem); // Deselect 
             }
             // SHIFT
-            else if (controls.isShift && Selekt.selected.length > 0) {
+            else if (controls.isShift && Selekt.selected.size > 0) {
+                let oi = siblings.indexOf(this.elItem); // Target's original index
                 let pi = siblings.indexOf(this.#elPivot); // Pivot index
                 if (oi > pi) [oi, pi] = [pi, oi];
-                this.clear().add(siblings.slice(oi, pi + 1), oi);
+                this.clear().add(siblings.slice(oi, pi + 1));
             }
         } else {
             this.clear().add(this.elItem);
@@ -180,8 +172,8 @@ class Selekt {
         const isSelected = this.elItem.matches(`.${this.classSelected}`); // Was already selected?
 
         if (
-            (isSelected && Selekt.selected.length > 0 && controls.isNone) || // Handle already selected items on pointerup
-            (isSelected && Selekt.selected.length === 1 && !controls.isCtrl) || // Prevent toggle on single (unless Ctrl key is pressed)
+            (isSelected && Selekt.selected.size > 0 && controls.isNone) || // Handle already selected items on pointerup
+            (isSelected && Selekt.selected.size === 1 && !controls.isCtrl) || // Prevent toggle on single (unless Ctrl key is pressed)
             (isSelected && !controls.isCtrl) // Do nothing on pointerdown if multiple select (we might want to drag items)
         ) {
             this.elItem.addEventListener("pointerup", this.handleUp, { once: true });
@@ -199,14 +191,17 @@ class Selekt {
         this.ctrlOn = true;
     }
 
-    add(elItem, index = 0) {
+    isSelected(elItem) {
+        return Selekt.selected.has(elItem);
+    }
+
+    add(elItem) {
         if (Array.isArray(elItem)) {
-            elItem.forEach((el) => this.add(el, index++));
+            elItem.forEach((el) => this.add(el));
             return;
         }
         elItem.classList.add(this.classSelected);
-        elItem.dataset.selektIndex = index;
-        Selekt.selected.push(elItem);
+        Selekt.selected.add(elItem);
         return this;
     }
 
@@ -215,26 +210,32 @@ class Selekt {
             elItem.forEach(el => this.remove(el));
             return;
         }
-        const index = Selekt.selected.indexOf(elItem);
-        if (index > -1) {
-            elItem.classList.remove(this.classSelected);
-            elItem.removeAttribute("data-selekt-index");
-            Selekt.selected.splice(index, 1);
-        }
+        elItem.classList.remove(this.classSelected);
+        Selekt.selected.delete(elItem);
         return this;
     }
 
-    /** @returns {HTMLElement[]} Get current selected elements */
-    get() {
-        return Selekt.selected.sort((a, b) => Number(a.dataset.selektIndex) - Number(b.dataset.selektIndex));
+    /**
+     * Get selected elements, sorted by original order
+     * @returns {HTMLElement[]}
+     * */
+    get(sortFn) {
+        return sortFn ? [...Selekt.selected].sort(sortFn) : [...Selekt.selected];
     }
 
     clear() {
-        Selekt.selected.forEach((el) => {
-            el.classList.remove(this.classSelected);
-            el.removeAttribute("data-selekt-index");
-        });
-        Selekt.selected = [];
+        Selekt.selected.forEach((elItem) => elItem.classList.remove(this.classSelected));
+        Selekt.selectedOld = [...Selekt.selected];
+        Selekt.selected.clear();
+        return this;
+    }
+
+    /**
+     * Re-select previously selected elements
+     * @returns {Selekt}
+     */
+    reselect() {
+        this.clear().add(Selekt.selectedOld);
         return this;
     }
 }
