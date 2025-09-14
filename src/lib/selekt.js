@@ -36,6 +36,7 @@ class Selekt {
         this.init(options);
 
         if (!Selekt.isClearInit) {
+            // Attach selection clearing to window only once 
             Selekt.isClearInit = true;
             addEventListener("pointerdown", Selekt.handleClear);
         }
@@ -44,6 +45,7 @@ class Selekt {
     init(options = {}) {
         Object.assign(this, options);
         this.elParent.addEventListener("pointerdown", this.handleDown);
+        this.elParent.addEventListener("pointerup", this.handleUp);
         this.elParent.addEventListener("touchstart", this.handleTouchstart);
     }
 
@@ -149,7 +151,6 @@ class Selekt {
         } else {
             this.clear().add(this.elItem);
         }
-
         this.onSelect?.call(this, { selected: this.get() });
     }
 
@@ -158,10 +159,10 @@ class Selekt {
         // Prevent nested selections bubble to selectable parent
         if (Selekt.isBusy) return;
         Selekt.isBusy = true;
-        requestAnimationFrame(() => Selekt.isBusy = false);
 
         const controls = this.getControls(ev);
         this.elItem = this.getImmediateChild(/**@type {HTMLElement}*/(ev.target));
+
         if (controls.isAny) ev.preventDefault();
 
         // No child found, clear selection
@@ -170,29 +171,35 @@ class Selekt {
             return;
         }
 
-        // Clear previous instances is selections were made in it
+        // Clear previous instances if selections were made in it
         if (Selekt.previousInstance !== this) {
             Selekt.previousInstance?.clear();
             Selekt.previousInstance = this;
         }
 
         // Determine if to handle on pointerdown or reschedule for pointerup
-        const isSelected = this.elItem.matches(`.${this.classSelected}`); // Was already selected?
+        const isAlreadySelected = this.elItem.matches(`.${this.classSelected}`); // Was already selected?
 
+        // Prevent toggle on single (unless Ctrl key is pressed))
+        if (isAlreadySelected && Selekt.selected.size === 1 && !controls.isCtrl) { 
+            return;
+        }
+
+        // Cases that need to be handled on pointerup:
         if (
-            (isSelected && Selekt.selected.size > 0 && controls.isNone) || // Handle already selected items on pointerup
-            (isSelected && Selekt.selected.size === 1 && !controls.isCtrl) || // Prevent toggle on single (unless Ctrl key is pressed)
-            (isSelected && !controls.isCtrl) // Do nothing on pointerdown if multiple select (we might want to drag items)
+            (isAlreadySelected && Selekt.selected.size > 0 && controls.isNone) || // Handle already selected items on pointerup
+            (isAlreadySelected && !controls.isCtrl) // Do nothing on pointerdown if multiple select (we might want to drag items)
         ) {
-            this.elItem.addEventListener("pointerup", this.handleUp, { once: true });
+            this.elItem.addEventListener("pointerup", (ev) => {
+                this.selectLogic(ev);
+            }, { once: true });
         } else {
             this.selectLogic(ev);
         }
     }
 
     handleUp(/** @type {PointerEvent} */ ev) {
-        if (!this.isEnabled) return;
-        this.selectLogic(ev);
+        Selekt.isBusy = false;
     }
 
     handleTouchstart() {
