@@ -1,6 +1,6 @@
 class Selekt {
     static selected = new Set();
-    static selectedOld = [];
+    static selectedOld = /** @type {HTMLElement[]} */ ([]);
     static previousInstance = null;
     static isClearInit = false;
     static isBusy = false;
@@ -131,10 +131,19 @@ class Selekt {
                 else this.remove(this.elItem); // Deselect 
             }
             // SHIFT
-            else if (controls.isShift && Selekt.selected.size > 0) {
-                let oi = siblings.indexOf(this.elItem); // Target's original index
-                let pi = siblings.indexOf(this.#elPivot); // Pivot index
-                if (oi > pi) [oi, pi] = [pi, oi];
+            else if (controls.isShift) {
+                let oi = 0;
+                let pi = 0;
+                if (Selekt.selected.size > 0) {
+                    oi = siblings.indexOf(this.elItem); // Target's original index
+                    pi = siblings.indexOf(this.#elPivot); // Pivot index
+                    if (oi > pi) [oi, pi] = [pi, oi];
+                }
+                // There's no selected items
+                else {
+                    this.#elPivot = this.elItem;
+                    pi = siblings.indexOf(this.#elPivot); // Pivot index
+                }
                 this.clear().add(siblings.slice(oi, pi + 1));
             }
         } else {
@@ -146,7 +155,6 @@ class Selekt {
 
     handleDown(/** @type {PointerEvent} */ ev) {
         if (!this.isEnabled) return;
-
         // Prevent nested selections bubble to selectable parent
         if (Selekt.isBusy) return;
         Selekt.isBusy = true;
