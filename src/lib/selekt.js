@@ -3,7 +3,12 @@ class Selekt {
     static previousInstance = null;
     static isClearInit = false;
     static isBusy = false;
-    static handleClear(/** @type {PointerEvent} */ ev) {
+
+    /**
+     * Handle selection clearing
+     * @param {PointerEvent} ev
+     */
+    static handleClear(ev) {
         if (!Selekt.previousInstance || !Selekt.selected.size) return;
         const targetParent = Selekt.previousInstance.closest(
             /** @type {HTMLElement} */(ev.target),
@@ -18,7 +23,12 @@ class Selekt {
     #elPivot = null;
     elItem = null;
 
-    constructor(/** @type {HTMLElement} */ elParent, options = {}) {
+    /**
+     * Constructor
+     * @param {HTMLElement} elParent
+     * @param {object} options
+     */
+    constructor(elParent, options = {}) {
         this.elParent = elParent;
         this.selectorIgnore = ".ignore";
         this.classSelected = "is-selected";
@@ -40,25 +50,45 @@ class Selekt {
         }
     }
 
+    /**
+     * Initialize Selekt instance
+     * @param {object} options
+     * @returns {this}
+     */
     init(options = {}) {
         Object.assign(this, options);
         this.elParent.addEventListener("pointerdown", this.handleDown);
         this.elParent.addEventListener("pointerup", this.handleUp);
         this.elParent.addEventListener("touchstart", this.handleTouchstart);
-    }
-
-    destroy() {
-        this.elParent.removeEventListener("pointerdown", this.handleDown);
-        this.elParent.removeEventListener("touchstart", this.handleTouchstart);
-    }
-
-    disable() {
-        this.isEnabled = false;
         return this;
     }
 
+    /**
+     * Destroy Selekt instance
+     * @returns {this}
+     */
+    destroy() {
+        this.elParent.removeEventListener("pointerdown", this.handleDown);
+        this.elParent.removeEventListener("pointerup", this.handleUp);
+        this.elParent.removeEventListener("touchstart", this.handleTouchstart);
+        return this;
+    }
+
+    /**
+     * Enable selection
+     * @returns {this}
+     */
     enable() {
         this.isEnabled = true;
+        return this;
+    }
+
+    /**
+     * Disable selection
+     * @returns {this}
+     */
+    disable() {
+        this.isEnabled = false;
         return this;
     }
 
@@ -77,7 +107,9 @@ class Selekt {
     }
 
     /**
-     * Get the immediate valid child element of the parent element starting from the Event Target
+     * Get the immediate (valid, not ignored) child element of the parent element starting from the Event Target
+     * @param {HTMLElement} elTarget
+     * @returns {HTMLElement|null}  
      */
     getImmediateChild(elTarget) {
         // Quick validation
@@ -93,7 +125,12 @@ class Selekt {
         }
     }
 
-    getControls(/** @type {PointerEvent} */ ev) {
+    /**
+     * Get control keys on pointer event
+     * @param {PointerEvent} ev
+     * @returns {{isCtrl: boolean, isShift: boolean, isAny: boolean, isNone: boolean}}
+     */
+    getControls(ev) {
         const isCtrl = this.ctrlOn || ev.ctrlKey || ev.metaKey;
         const isShift = ev.shiftKey;
         return {
@@ -104,8 +141,12 @@ class Selekt {
         };
     }
 
+    /**
+     *  Get all (valid, not ignored) children of this.elParent
+     * @returns {HTMLElement[]} Array of child elements
+     */
     getChildren() {
-        return [...this.elParent.children].filter(el => !el.matches(this.selectorIgnore));
+        return /** @type {HTMLElement[]} */ ([...this.elParent.children].filter(el => !el.matches(this.selectorIgnore)));
     }
 
     /**
@@ -113,12 +154,16 @@ class Selekt {
      * @param {boolean} state
      * @returns {this}
      */
-    setCtrl(/** @type {boolean} */ state) {
+    setCtrl(state) {
         this.ctrlOn = state ?? !this.ctrlOn;
         return this;
     }
 
-    selectLogic(/** @type {PointerEvent} */ ev) {
+    /**
+     * Selection logic
+     * @param {PointerEvent} ev
+     */
+    selectLogic(ev) {
         if (this.isMultiple) {
             const controls = this.getControls(ev);
             const siblings = this.getChildren();
@@ -126,15 +171,15 @@ class Selekt {
             if (controls.isNone) {
                 const isSel = this.isSelected(this.elItem); // Already selected?
                 this.#elPivot = this.elItem; // Set pivot element (for shift selection)
-                if (!isSel || Selekt.selected.size > 1) this.clear().add(this.elItem); // Select
+                if (!isSel || Selekt.selected.size > 1) this.clear().select(this.elItem); // Select
                 else this.clear(); // Deselect 
             }
             // CTRL
             else if (controls.isCtrl) {
                 const isSel = this.isSelected(this.elItem); // Already selected?
                 this.#elPivot = this.elItem;  // Set pivot element (for shift selection)
-                if (!isSel) this.add(this.elItem); // Select
-                else this.remove(this.elItem); // Deselect 
+                if (!isSel) this.select(this.elItem); // Select
+                else this.deselect(this.elItem); // Deselect 
             }
             // SHIFT
             else if (controls.isShift) {
@@ -150,15 +195,19 @@ class Selekt {
                     this.#elPivot = this.elItem;
                     pi = siblings.indexOf(this.#elPivot); // Pivot index
                 }
-                this.clear().add(siblings.slice(oi, pi + 1));
+                this.clear().select(siblings.slice(oi, pi + 1));
             }
         } else {
-            this.clear().add(this.elItem);
+            this.clear().select(this.elItem);
         }
-        this.onSelect?.call(this, { selected: this.get() });
+        this.onSelect?.call(this, { selected: this.getSelected() });
     }
 
-    handleDown(/** @type {PointerEvent} */ ev) {
+    /**
+     * Handle pointerdown event and apply selection logic
+     * @param {PointerEvent} ev
+     */
+    handleDown(ev) {
         if (!this.isEnabled) return;
         // Prevent nested selections bubble to selectable parent
         if (Selekt.isBusy) return;
@@ -185,7 +234,7 @@ class Selekt {
         const isAlreadySelected = this.elItem.matches(`.${this.classSelected}`); // Was already selected?
 
         // Prevent toggle on single (unless Ctrl key is pressed))
-        if (isAlreadySelected && Selekt.selected.size === 1 && !controls.isCtrl) { 
+        if (isAlreadySelected && Selekt.selected.size === 1 && !controls.isCtrl) {
             return;
         }
 
@@ -194,7 +243,7 @@ class Selekt {
             (isAlreadySelected && Selekt.selected.size > 0 && controls.isNone) || // Handle already selected items on pointerup
             (isAlreadySelected && !controls.isCtrl) // Do nothing on pointerdown if multiple select (we might want to drag items)
         ) {
-            this.elItem.addEventListener("pointerup", (ev) => {
+            this.elItem.addEventListener("pointerup", (/** @type {PointerEvent} */ ev) => {
                 this.selectLogic(ev);
             }, { once: true });
         } else {
@@ -202,7 +251,10 @@ class Selekt {
         }
     }
 
-    handleUp(/** @type {PointerEvent} */ ev) {
+    /**
+     * Handle pointerup
+     */
+    handleUp() {
         Selekt.isBusy = false;
     }
 
@@ -214,9 +266,14 @@ class Selekt {
         return Selekt.selected.has(elItem);
     }
 
-    add(elItem) {
+    /**
+     * Select element(s)
+     * @param {HTMLElement|HTMLElement[]} elItem
+     * @returns {this}
+     */
+    select(elItem) {
         if (Array.isArray(elItem)) {
-            elItem.forEach((el) => this.add(el));
+            elItem.forEach((el) => this.select(el));
             return;
         }
         elItem.classList.add(this.classSelected);
@@ -224,9 +281,14 @@ class Selekt {
         return this;
     }
 
-    remove(elItem) {
+    /**
+     * Deselect element(s)
+     * @param {HTMLElement|HTMLElement[]} elItem
+     * @returns {this}
+     */
+    deselect(elItem) {
         if (Array.isArray(elItem)) {
-            elItem.forEach(el => this.remove(el));
+            elItem.forEach(el => this.deselect(el));
             return;
         }
         elItem.classList.remove(this.classSelected);
@@ -235,13 +297,18 @@ class Selekt {
     }
 
     /**
-     * Get selected elements, sorted by original order
+     * Get selected elements, optionally sorted by original order
+     * @param {(a: HTMLElement, b: HTMLElement) => number} [sortFn]
      * @returns {HTMLElement[]}
-     * */
-    get(sortFn) {
-        return sortFn ? [...Selekt.selected].sort(sortFn) : [...Selekt.selected];
+     */
+    getSelected(sortFn) {
+        return [...Selekt.selected].sort(sortFn);
     }
 
+    /**
+     * Clear all selected elements
+     * @returns {this}
+     */
     clear() {
         Selekt.selected.forEach((elItem) => elItem.classList.remove(this.classSelected));
         Selekt.selected.clear();
