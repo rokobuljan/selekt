@@ -11,7 +11,7 @@ class Selekt {
     static handleClear(ev) {
         if (!Selekt.previousInstance || !Selekt.selected.size) return;
         const targetParent = Selekt.previousInstance.closest(
-            /** @type {HTMLElement} */(ev.target),
+            ev.target,
             Selekt.previousInstance.elParent
         );
         if (!targetParent) {
