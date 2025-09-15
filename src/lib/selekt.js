@@ -1,6 +1,5 @@
 class Selekt {
     static selected = new Set();
-    static selectedOld = /** @type {HTMLElement[]} */ ([]);
     static previousInstance = null;
     static isClearInit = false;
     static isBusy = false;
@@ -18,7 +17,6 @@ class Selekt {
 
     #elPivot = null;
     elItem = null;
-    isTouch = false;
 
     constructor(/** @type {HTMLElement} */ elParent, options = {}) {
         this.elParent = elParent;
@@ -79,7 +77,7 @@ class Selekt {
     }
 
     /**
-     * Get the closest valid child element of the parent element starting from the Event Target
+     * Get the immediate valid child element of the parent element starting from the Event Target
      */
     getImmediateChild(elTarget) {
         // Quick validation
@@ -106,18 +104,24 @@ class Selekt {
         };
     }
 
-    getAllowedChildren() {
+    getChildren() {
         return [...this.elParent.children].filter(el => !el.matches(this.selectorIgnore));
     }
 
-    toggleCtrl(/** @type {boolean} */ state) {
+    /**
+     * Toggle ctrlOn state
+     * @param {boolean} state
+     * @returns {this}
+     */
+    setCtrl(/** @type {boolean} */ state) {
         this.ctrlOn = state ?? !this.ctrlOn;
+        return this;
     }
 
     selectLogic(/** @type {PointerEvent} */ ev) {
         if (this.isMultiple) {
             const controls = this.getControls(ev);
-            const siblings = this.getAllowedChildren();
+            const siblings = this.getChildren();
             // SINGLE
             if (controls.isNone) {
                 const isSel = this.isSelected(this.elItem); // Already selected?
@@ -240,17 +244,7 @@ class Selekt {
 
     clear() {
         Selekt.selected.forEach((elItem) => elItem.classList.remove(this.classSelected));
-        Selekt.selectedOld = [...Selekt.selected];
         Selekt.selected.clear();
-        return this;
-    }
-
-    /**
-     * Re-select previously selected elements
-     * @returns {Selekt}
-     */
-    reselect() {
-        this.clear().add(Selekt.selectedOld);
         return this;
     }
 }
