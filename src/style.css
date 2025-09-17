@@ -1,56 +1,100 @@
-:root {
-    font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-    line-height: 1.5;
-    font-weight: 400;
-
-    color-scheme: light dark;
-    color: rgba(255, 255, 255, 0.87);
-    background-color: #242424;
-
-    font-synthesis: none;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
-
 * {
-    margin: 0;
     box-sizing: border-box;
+    margin: 0;
 }
 
-a {
-    font-weight: 500;
-    color: #646cff;
-    text-decoration: inherit;
-}
-a:hover {
-    color: #535bf2;
+body {
+    font: 1rem/1.4 system-ui, sans-serif;
+    padding: 2rem;
 }
 
-h1 {
-    font-size: 3.2em;
-    line-height: 1.1;
+#app {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-@media (prefers-color-scheme: light) {
-    :root {
-        color: #213547;
-        background-color: #ffffff;
+.explorer {
+    --color-gray: #222;
+    border: 1px solid var(--color-gray);
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem #0001;
+    width: max-content;
+
+    .header {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        border-bottom: 1px solid var(--color-gray);
+        padding-left: 0.5rem;
+        background: #0001;
+
+        h4 {
+            margin-right: auto;
+            white-space: nowrap;
+            font-weight: 400;
+            padding: 0 0.5rem;
+        }
+
+        button {
+            all: unset;
+            padding: 0.3rem 0.9rem;
+            width: 0.8em;
+            transition: background 0.2s;
+            cursor: pointer;
+
+            &:hover {
+                background: #0001;
+            }
+
+            &.x:hover {
+                background: #f00;
+                color: #fff;
+            }
+        }
     }
-    a:hover {
-        color: #747bff;
-    }
-    button {
-        background-color: #f9f9f9;
-    }
-}
 
-ul {
-    outline: 1px solid #666;
-    padding-bottom: 2rem;
+    .body {
+        padding: 0.8rem 1rem;
+
+        & > ul {
+            padding-left: 0;
+            min-width: 20rem;
+        }
+    }
+
+    .footer {
+        padding: 0.5rem 1rem;
+        border-top: 1px solid var(--color-gray);
+        font-size: 0.8rem;
+        text-align: right;
+
+        span {
+            font-weight: 700;
+        }
+    }
+
+    ul {
+        padding-left: 1rem;
+        list-style: none;
+        background: #fff;
+    }
+
+    .icon {
+        display: inline-block;
+        width: 1.8ch;
+        text-align: center;
+        margin-right: 0.25rem;
+        opacity: 0.7;
+    }
+
+    ul ul {
+        border-left: 1px solid #4443;
+        margin-left: 0.4rem;
+    }
 }
 
 .is-selected {
-    background: #0bf8;
+    background: #0002;
     user-select: none;
 }

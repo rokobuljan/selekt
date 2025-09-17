@@ -200,7 +200,16 @@ class Selekt {
         } else {
             this.clear().select(this.elItem);
         }
-        this.onSelect?.call(this, { selected: this.getSelected() });
+
+        this.triggerOnSelect();
+    }
+
+    triggerOnSelect() {
+        this.onSelect?.call(this, {
+            selected: this.getSelected(),
+            parent: this.elParent,
+            item: this.elItem
+        });
     }
 
     /**
@@ -312,6 +321,7 @@ class Selekt {
     clear() {
         Selekt.selected.forEach((elItem) => elItem.classList.remove(this.classSelected));
         Selekt.selected.clear();
+        this.triggerOnSelect();
         return this;
     }
 }

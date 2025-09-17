@@ -10,32 +10,143 @@
 
 <body>
     <div id="app">
-        <ul id="list-one">
-            <li id="11">Item 1.1</li>
-            <li id="12">Item 1.2</li>
-            <li id="13">Item 1.3</li>
-            <li id="14">Item 1.4</li>
-            <li id="15">Item 1.5</li>
-            <li id="16">
-                Item 1.6
-                <ul id="list-two">
-                    <li id="inner-21">Item 2.1</li>
-                    <li id="inner-22">Item 2.2</li>
-                    <li id="inner-23">Item 2.3</li>
-                    <li id="inner-24">Item 2.4</li>
+        <div class="explorer">
+            <div class="header">
+                <h4><span class="icon">&#x1F4C1;&#xfe0e;</span> Selekt</h4>
+                <button type="button">&#x23af;</button>
+                <button type="button">&#x25A2;</button>
+                <button type="button" class="x">&#x2715;</button>
+            </div>
+            <div class="body">
+                <ul>
+                    <li>
+                        <span class="icon">&#x1F4C4;&#xfe0e;</span> .env
+                    </li>
+                    <li>
+                        <span class="icon">&#x1F4C4;&#xfe0e;</span> .gitignore
+                    </li>
+                    <li>
+                        <span class="icon">&#x1F4DD;&#xfe0e;</span> config.json
+                    </li>
+                    <li>
+                        <span class="icon">&#x1F4C1;&#xfe0e;</span> docs
+                    </li>
+                    <li>
+                        <span class="icon">&#x1F4C2;&#xfe0e;</span> public
+                        <ul>
+                            <li>
+                                <span class="icon">&#x1F5BC;&#xfe0e;</span> favicon.svg
+                            </li>
+                            <li>
+                                <span class="icon">&#x1F5BC;&#xfe0e;</span> logo.png
+                            </li>
+                            <li>
+                                <span class="icon x">&#x1F5BC;&#xfe0e;</span> wallpaper.jpg
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <span class="icon">&#x1F4C2;&#xfe0e;</span> src
+                        <ul>
+                            <li>
+                                <span class="icon">&#x1F4C1;&#xfe0e;</span> assets
+                            </li>
+                            <li>
+                                <span class="icon">&#x1F4C4;&#xfe0e;</span> style.css
+                            </li>
+                            <li>
+                                <span class="icon">&#x1F4C4;&#xfe0e;</span> index.js
+                            </li>
+                            <li>
+                                <span class="icon">&#x1F4C4;&#xfe0e;</span> index.html
+                            </li>
+                        </ul>
+                    </li>
+                    <!-- <li class="ignore">
+                        <span class="icon">&#x1F4C4;&#xfe0e;</span> IGNORE.ME
+                    </li> -->
+                    <li>
+                        <span class="icon">&#x1F4E6;&#xfe0e;</span> package.json
+                    </li>
+                    <li>
+                        <span class="icon">&#x1F4C4;&#xfe0e;</span> readme.md
+                    </li>
+                    <li>
+                        <span class="icon">&#x2699;&#xfe0e;</span> vite.config.js
+                    </li>
                 </ul>
-            </li>
-            <li id="17">Item 1.7</li>
-            <li id="18" class="ignore">IGNORE Item 1.8</li>
-            <li id="19">Item 1.9</li>
-        </ul>
-        <ul id="list-tre">
-            <li id="inner-31">Item 3.1</li>
-            <li id="inner-32">Item 3.2</li>
-            <li id="inner-33">Item 3.3</li>
-            <li id="inner-34">Item 3.4</li>
-            <li id="inner-35">Item 3.5</li>
-        </ul>
+            </div>
+            <div class="footer">
+                Selected: <span class="count">0</span>
+            </div>
+        </div>
+        <div class="explorer">
+            <div class="header">
+                <h4><span class="icon">&#x1F4C1;&#xfe0e;</span> Selekt</h4>
+                <button type="button">&#x23af;</button>
+                <button type="button">&#x25A2;</button>
+                <button type="button" class="x">&#x2715;</button>
+            </div>
+            <div class="body">
+                <ul>
+                    <li>
+                        <span class="icon">&#x1F4C4;&#xfe0e;</span> .gitignore
+                    </li>
+                    <li>
+                        <span class="icon">&#x1F4DD;&#xfe0e;</span> config.json
+                    </li>
+                    <li>
+                        <span class="icon">&#x1F4C1;&#xfe0e;</span> docs
+                    </li>
+                    <li>
+                        <span class="icon">&#x1F4C2;&#xfe0e;</span> public
+                        <ul>
+                            <li>
+                                <span class="icon">&#x1F5BC;&#xfe0e;</span> favicon.svg
+                            </li>
+                            <li>
+                                <span class="icon">&#x1F5BC;&#xfe0e;</span> logo.png
+                            </li>
+                            <li>
+                                <span class="icon x">&#x1F5BC;&#xfe0e;</span> wallpaper.jpg
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <span class="icon">&#x1F4C2;&#xfe0e;</span> src
+                        <ul>
+                            <li>
+                                <span class="icon">&#x1F4C1;&#xfe0e;</span> assets
+                            </li>
+                            <li>
+                                <span class="icon">&#x1F4C4;&#xfe0e;</span> style.css
+                            </li>
+                            <li>
+                                <span class="icon">&#x1F4C4;&#xfe0e;</span> index.js
+                            </li>
+                            <li>
+                                <span class="icon">&#x1F4C4;&#xfe0e;</span> index.html
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="ignore">
+                        <span class="icon">&#x1F4C4;&#xfe0e;</span> IGNORE.ME
+                    </li>
+                    <li>
+                        <span class="icon">&#x1F4E6;&#xfe0e;</span> package.json
+                    </li>
+                    <li>
+                        <span class="icon">&#x1F4C4;&#xfe0e;</span> readme.md
+                    </li>
+                    <li>
+                        <span class="icon">&#x2699;&#xfe0e;</span> vite.config.js
+                    </li>
+                </ul>
+            </div>
+            <div class="footer">
+                Selected: <span class="count">0</span>
+            </div>
+        </div>
     </div>
     <script type="module" src="/src/main.js"></script>
 </body>
